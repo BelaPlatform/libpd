@@ -154,13 +154,17 @@ int libpd_process_raw(const float *inBuffer, float *outBuffer) {
   return 0;
 }
 
+void libpd_sys_microsleep(int sleep){
+    sys_microsleep(sleep);
+}
+
 static const t_sample sample_to_short = SHRT_MAX,
                    short_to_sample = 1.0 / (t_sample) SHRT_MAX;
 
 #define PROCESS(_x, _y) \
   int i, j, k; \
   t_sample *p0, *p1; \
-  sys_microsleep(0); \
+  /*sys_microsleep(0);*/ \
   for (i = 0; i < ticks; i++) { \
     for (j = 0, p0 = sys_soundin; j < DEFDACBLKSIZE; j++, p0++) { \
       for (k = 0, p1 = p0; k < sys_inchannels; k++, p1 += DEFDACBLKSIZE) { \

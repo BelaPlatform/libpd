@@ -1,7 +1,7 @@
 UNAME = $(shell uname)
 SOLIB_PREFIX = lib
 
-ifeq ($(UNAME), Darwin)  # Mac
+ifeq ($(UNAME), IWantToCrossCompileSoITookOutDarwinFromHere)  # Mac
   SOLIB_EXT = dylib
   PDNATIVE_SOLIB_EXT = jnilib
   PDNATIVE_PLATFORM = mac
@@ -118,7 +118,7 @@ OPT_CFLAGS = -O3
 ifeq ($(DEBUG), true)
 	OPT_CFLAGS = -Wall
 endif
-
+CC = arm-linux-gnueabihf-gcc
 # object files which are somehow generated but not from sources listed above,
 # there is probably a better fix but this works for now
 PD_EXTRA_OBJS = \
