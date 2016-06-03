@@ -11,7 +11,8 @@ PLATFORM_CFLAGS = -DHAVE_LIBDL -Wno-int-to-pointer-cast \
 # this is a dirty trick to have the shell generate them for you:
 # printf "%s" "-Wl"; for a in `grep -RhIo "\w*pthread_\w*" pure-data/src pure-data/extra libpd_wrapper | grep -v _t | sort -u`; do printf ",-wrap,$a";
 # A more orthodox way would be to use xeno-config
-LD_XENOMAI_WRAP_FLAGS := -Wl$(shell for a in `grep -RhIo "\w*pthread_\w*" pure-data/src pure-data/extra libpd_wrapper | grep -v _t | sort -u`; do printf ",-wrap,$$a"; done)
+XENOMAI_LIB_PATH ?= /usr/local/linaro/arm-linux-gnueabihf//include/xenomai/lib/
+LD_XENOMAI_WRAP_FLAGS := -Wl$(shell for a in `grep -RhIo "\w*pthread_\w*" pure-data/src pure-data/extra libpd_wrapper | grep -v "_t" | grep -v pthread_join | sort -u`; do printf ",-wrap,$$a"; done) -lpthread_rt -L$(XENOMAI_LIB_PATH)
 LDFLAGS = -shared -ldl -Wl,-Bsymbolic $(LD_XENOMAI_WRAP_FLAGS) 
 CPP_LDFLAGS = $(LDFLAGS)
 
