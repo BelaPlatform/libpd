@@ -65,11 +65,13 @@ CPP_FILES = \
 	cpp/PdTypes.cpp
 
 # conditional libpd_wrapper/util compilation
+UTIL?=true
 ifeq ($(UTIL), true)
 	UTIL_FILES = $(LIBPD_UTILS)
 endif
 
 # conditional pure-data/extra externals compilation
+EXTRA?=true
 ifeq ($(EXTRA), true)
 	EXTRA_FILES = $(PD_EXTRA_FILES)
 	EXTRA_CFLAGS = -I./pure-data/extra/expr~ -DLIBPD_EXTRA
