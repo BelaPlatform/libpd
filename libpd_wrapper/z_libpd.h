@@ -29,6 +29,9 @@ EXTERN int libpd_getdollarzero(void *p);
 EXTERN int libpd_blocksize(void);
 EXTERN int libpd_init_audio(int inChans, int outChans, int sampleRate);
 EXTERN int libpd_process_raw(const float *inBuffer, float *outBuffer);
+EXTERN t_sample* libpd_get_sys_soundin();
+EXTERN t_sample* libpd_get_sys_soundout();
+EXTERN int libpd_process_sys();
 EXTERN int libpd_process_short(const int ticks,
     const short *inBuffer, short *outBuffer);
 EXTERN int libpd_process_float(int ticks,

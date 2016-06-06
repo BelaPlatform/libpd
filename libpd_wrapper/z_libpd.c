@@ -154,6 +154,21 @@ int libpd_process_raw(const float *inBuffer, float *outBuffer) {
   return 0;
 }
 
+int libpd_process_sys(){
+  /* sys_microsleep(0); */
+  memset(sys_soundout, 0, sys_outchannels*DEFDACBLKSIZE*sizeof(t_sample));
+  SCHED_TICK(sys_time + sys_time_per_dsp_tick);
+  return 0;
+}
+
+t_sample* libpd_get_sys_soundin(){
+  return get_sys_soundin();
+}
+
+t_sample* libpd_get_sys_soundout(){
+  return get_sys_soundout();
+}
+
 void libpd_sys_microsleep(int sleep){
     sys_microsleep(sleep);
 }
