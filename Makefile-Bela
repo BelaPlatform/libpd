@@ -11,7 +11,7 @@ PLATFORM_CFLAGS = -DHAVE_LIBDL -Wno-int-to-pointer-cast \
 # this is a dirty trick to have the shell generate them for you:
 # printf "%s" "-Wl"; for a in `grep -RhIo "\w*pthread_\w*" pure-data/src pure-data/extra libpd_wrapper | grep -v _t | sort -u`; do printf ",-wrap,$a";
 # A more orthodox way would be to use xeno-config
-XENOMAI_LIB_PATH ?= /usr/local/linaro/arm-linux-gnueabihf//include/xenomai/lib/
+XENOMAI_LIB_PATH ?= /usr/local/linaro/arm-linux-gnueabihf/xenomai/lib/
 LD_XENOMAI_WRAP_FLAGS := -Wl$(shell for a in `grep -RhIo "\w*pthread_\w*" pure-data/src pure-data/extra libpd_wrapper | grep -v "_t" | grep -v pthread_join | sort -u`; do printf ",-wrap,$$a"; done) -lpthread_rt -L$(XENOMAI_LIB_PATH)
 LDFLAGS = -shared -ldl -Wl,-Bsymbolic $(LD_XENOMAI_WRAP_FLAGS) 
 CPP_LDFLAGS = $(LDFLAGS)
@@ -64,7 +64,7 @@ PD_EXTRA_FILES= \
 	pure-data/extra/expr~/vexp_if.c pure-data/extra/expr~/vexp.c \
 	pure-data/extra/loop~/loop~.c \
 	pure-data/extra/lrshift~/lrshift~.c pure-data/extra/pique/pique.c \
-	pure-data/extra/stdout/stdout.c 
+	pure-data/extra/sigmund~/sigmund~.c pure-data/extra/stdout/stdout.c 
 
 LIBPD_UTILS = \
 	libpd_wrapper/util/z_print_util.c \
@@ -85,11 +85,11 @@ endif
 EXTRA?=true
 ifeq ($(EXTRA), true)
 	EXTRA_FILES = $(PD_EXTRA_FILES)
-	EXTRA_CFLAGS = -I./pure-data/extra/expr~ -DLIBPD_EXTRA
+	EXTRA_CFLAGS = -I./pure-data/extra/expr~ -DLIBPD_EXTRA -I/usr/local/linaro/arm-linux-gnueabihf/xenomai/include/
 endif
 
 # conditional optimizations or debug settings
-OPT_CFLAGS = -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon --fast-math -ftree-vectorize -ftree-vectorizer-verbose=1 
+OPT_CFLAGS = -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon --fast-math -ftree-vectorize -ftree-vectorizer-verbose=1 -O2
 ifeq ($(DEBUG), true)
 	OPT_CFLAGS = -Wall -g
 endif
@@ -111,7 +111,7 @@ CFLAGS = -DPD -DHAVE_UNISTD_H -DUSEAPI_DUMMY -I./pure-data/src -I./libpd_wrapper
 
 CXXFLAGS = $(CFLAGS) $(CPP_FLAGS)
 
-.PHONY: libpd cpplib install uninstall clean clobber
+.PHONY: libpd cpplib install uninstall clean clobber copy
 
 libpd: $(LIBPD)
 
@@ -142,6 +142,9 @@ install:
 		install cpp/*.hpp $(prefix)/include/libpd; \
 		install $(PDCPP) $(prefix)/lib; \
 	fi
+
+copy: libpd
+	scp libs/libpd.so bbb:/usr/lib/
 
 uninstall:
 	rm -rf $(prefix)/include/libpd

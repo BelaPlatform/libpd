@@ -41,7 +41,7 @@ void pd_init(void);
   void loop_tilde_setup();
   void lrshift_tilde_setup();
   void pique_setup();
-//  void sigmund_tilde_setup();
+  void sigmund_tilde_setup();
   void stdout_setup();
 #endif
 
@@ -93,7 +93,7 @@ int libpd_init(void) {
   loop_tilde_setup();
   lrshift_tilde_setup();
   pique_setup();
-//  sigmund_tilde_setup();
+  sigmund_tilde_setup();
   stdout_setup();
 #endif
 
