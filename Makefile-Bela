@@ -11,9 +11,15 @@ PLATFORM_CFLAGS = -DHAVE_LIBDL -Wno-int-to-pointer-cast \
 # this is a dirty trick to have the shell generate them for you:
 # printf "%s" "-Wl"; for a in `grep -RhIo "\w*pthread_\w*" pure-data/src pure-data/extra libpd_wrapper | grep -v _t | sort -u`; do printf ",-wrap,$a";
 # A more orthodox way would be to use xeno-config
-XENOMAI_LIB_PATH ?= /usr/local/linaro/arm-linux-gnueabihf/xenomai/lib/
-LD_XENOMAI_WRAP_FLAGS := -Wl$(shell for a in `grep -RhIo "\w*pthread_\w*" pure-data/src pure-data/extra libpd_wrapper | grep -v "_t" | grep -v pthread_join | sort -u`; do printf ",-wrap,$$a"; done) -lpthread_rt -L$(XENOMAI_LIB_PATH)
-LDFLAGS = -shared -ldl -Wl,-Bsymbolic $(LD_XENOMAI_WRAP_FLAGS) 
+XENO_PATH?=/usr/local/linaro/arm-linux-gnueabihf/xenomai/
+#XENO_POSIX_CFLAGS:=$(shell DESTDIR=$(XENO_DESTDIR) $(XENO_CONFIG) --skin=posix --cflags)
+XENO_POSIX_CFLAGS:=-I$(XENO_PATH)/include -D_GNU_SOURCE -D_REENTRANT -D__XENO__ -I$(XENO_PATH)/posix
+#XENO_POSIX_LIBS:=$(shell DESTDIR=$(XENO_DESTDIR) $(XENO_CONFIG) --skin=posix --ldflags)
+XENO_POSIX_LIBS:=-Wl,@$(XENO_PATH)/lib/posix.wrappers -L$(XENO_PATH)/lib -lpthread_rt -lxenomai -lpthread -lrt
+XENO_LIB_PATH ?= $(XENO_PATH)/lib/
+
+#LD_XENO_WRAP_FLAGS := -Wl$(shell for a in `grep -RhIo "\w*pthread_\w*" pure-data/src pure-data/extra libpd_wrapper | grep -v "_t" | grep -v pthread_join | sort -u`; do printf ",-wrap,$$a"; done) -lpthread_rt -L$(XENO_LIB_PATH)
+LDFLAGS = -shared -ldl -Wl,-Bsymbolic $(XENO_POSIX_LIBS)
 CPP_LDFLAGS = $(LDFLAGS)
 
 PDNATIVE_SOLIB_EXT ?= $(SOLIB_EXT)
@@ -85,7 +91,7 @@ endif
 EXTRA?=true
 ifeq ($(EXTRA), true)
 	EXTRA_FILES = $(PD_EXTRA_FILES)
-	EXTRA_CFLAGS = -I./pure-data/extra/expr~ -DLIBPD_EXTRA -I/usr/local/linaro/arm-linux-gnueabihf/xenomai/include/
+	EXTRA_CFLAGS = -I./pure-data/extra/expr~ -DLIBPD_EXTRA -I/usr/local/linaro/arm-linux-gnueabihf/xenomai/include/ -I/usr/xenomai/include
 endif
 
 # conditional optimizations or debug settings
@@ -107,7 +113,7 @@ LIBPD = libs/libpd.$(SOLIB_EXT)
 PDCPP = libs/libpdcpp.$(SOLIB_EXT)
 
 CFLAGS = -DPD -DHAVE_UNISTD_H -DUSEAPI_DUMMY -I./pure-data/src -I./libpd_wrapper \
-         -I./libpd_wrapper/util $(EXTRA_CFLAGS) $(PLATFORM_CFLAGS) $(OPT_CFLAGS)
+         -I./libpd_wrapper/util $(EXTRA_CFLAGS) $(PLATFORM_CFLAGS) $(OPT_CFLAGS) $(XENO_CFLAGS)
 
 CXXFLAGS = $(CFLAGS) $(CPP_FLAGS)
 
@@ -144,7 +150,7 @@ install:
 	fi
 
 copy: libpd
-	scp libs/libpd.so bbb:/usr/lib/
+	scp libs/libpd.so root@192.168.7.2:/usr/lib/
 
 uninstall:
 	rm -rf $(prefix)/include/libpd
