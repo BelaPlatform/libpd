@@ -1,6 +1,13 @@
 NAME = $(shell uname)
 SOLIB_PREFIX = lib
 
+CC = arm-linux-gnueabihf-gcc
+CROSS_COMPILE_FLAGS= -march=armv7-a
+COMPILER_SPECIFIC_FLAGS = -ffast-math -fsingle-precision-constant
+#CC = clang-mp-3.8
+#CROSS_COMPILE_FLAGS = -target armv7l-unknown-linux-gnueabihf -I$U/include/c++/4.9 -I$U/include/arm-linux-gnueabihf/c++/4.9 -I$U/include/c++/4.9/backward -I$U/local/include -I$U/local/lib/clang/3.8.0/include -I$U/include/arm-linux-gnueabihf -I$U/include -c
+#COMPILER_SPECIFIC_FLAGS = 
+
 # Assume Linux
 SOLIB_EXT = so
 PDNATIVE_PLATFORM = linux
@@ -17,6 +24,7 @@ XENO_POSIX_CFLAGS:=-I$(XENO_PATH)/include -D_GNU_SOURCE -D_REENTRANT -D__XENO__ 
 #XENO_POSIX_LIBS:=$(shell DESTDIR=$(XENO_DESTDIR) $(XENO_CONFIG) --skin=posix --ldflags)
 XENO_POSIX_LIBS:=-Wl,@$(XENO_PATH)/lib/posix.wrappers -L$(XENO_PATH)/lib -lpthread_rt -lxenomai -lpthread -lrt
 XENO_LIB_PATH ?= $(XENO_PATH)/lib/
+U = /Users/Giulio/arm/usr
 
 #LD_XENO_WRAP_FLAGS := -Wl$(shell for a in `grep -RhIo "\w*pthread_\w*" pure-data/src pure-data/extra libpd_wrapper | grep -v "_t" | grep -v pthread_join | sort -u`; do printf ",-wrap,$$a"; done) -lpthread_rt -L$(XENO_LIB_PATH)
 LDFLAGS = -shared -ldl -Wl,-Bsymbolic $(XENO_POSIX_LIBS)
@@ -95,11 +103,10 @@ ifeq ($(EXTRA), true)
 endif
 
 # conditional optimizations or debug settings
-OPT_CFLAGS = -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon --fast-math -ftree-vectorize -ftree-vectorizer-verbose=1 -O2
+OPT_CFLAGS = -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -O2 -save-temps $(COMPILER_SPECIFIC_FLAGS)
 ifeq ($(DEBUG), true)
 	OPT_CFLAGS = -Wall -g
 endif
-CC = arm-linux-gnueabihf-gcc
 # object files which are somehow generated but not from sources listed above,
 # there is probably a better fix but this works for now
 PD_EXTRA_OBJS = \
@@ -113,7 +120,7 @@ LIBPD = libs/libpd.$(SOLIB_EXT)
 PDCPP = libs/libpdcpp.$(SOLIB_EXT)
 
 CFLAGS = -DPD -DHAVE_UNISTD_H -DUSEAPI_DUMMY -I./pure-data/src -I./libpd_wrapper \
-         -I./libpd_wrapper/util $(EXTRA_CFLAGS) $(PLATFORM_CFLAGS) $(OPT_CFLAGS) $(XENO_CFLAGS)
+         -I./libpd_wrapper/util $(EXTRA_CFLAGS) $(PLATFORM_CFLAGS) $(OPT_CFLAGS) $(XENO_CFLAGS) $(CROSS_COMPILE_FLAGS)
 
 CXXFLAGS = $(CFLAGS) $(CPP_FLAGS)
 
@@ -150,7 +157,7 @@ install:
 	fi
 
 copy: libpd
-	scp libs/libpd.so root@192.168.7.2:/usr/lib/
+	rsync libs/libpd.so root@192.168.7.2:/usr/lib/
 
 uninstall:
 	rm -rf $(prefix)/include/libpd
