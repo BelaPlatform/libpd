@@ -13,7 +13,7 @@ SOLIB_EXT = so
 PDNATIVE_PLATFORM = linux
 PDNATIVE_ARCH = $(shell $(CC) -dumpmachine | sed -e 's,-.*,,' -e 's,i[3456]86,x86,' -e 's,amd64,x86_64,')
 PLATFORM_CFLAGS = -DHAVE_LIBDL -Wno-int-to-pointer-cast \
-  -Wno-pointer-to-int-cast -fPIC -I"$(JAVA_HOME)/include"
+  -Wno-pointer-to-int-cast -fPIC -I"$(JAVA_HOME)/include" -no-pie -fno-pie -fPIC
 # below we define the -wrap flags to be passed to the compiler.
 # this is a dirty trick to have the shell generate them for you:
 # printf "%s" "-Wl"; for a in `grep -RhIo "\w*pthread_\w*" pure-data/src pure-data/extra libpd_wrapper | grep -v _t | sort -u`; do printf ",-wrap,$a";
@@ -22,12 +22,13 @@ XENO_PATH?=/usr/local/linaro/arm-linux-gnueabihf/xenomai/
 #XENO_POSIX_CFLAGS:=$(shell DESTDIR=$(XENO_DESTDIR) $(XENO_CONFIG) --skin=posix --cflags)
 XENO_POSIX_CFLAGS:=-I$(XENO_PATH)/include -D_GNU_SOURCE -D_REENTRANT -D__XENO__ -I$(XENO_PATH)/posix
 #XENO_POSIX_LIBS:=$(shell DESTDIR=$(XENO_DESTDIR) $(XENO_CONFIG) --skin=posix --ldflags)
-XENO_POSIX_LIBS:=-Wl,@$(XENO_PATH)/lib/posix.wrappers -L$(XENO_PATH)/lib -lpthread_rt -lxenomai -lpthread -lrt
+#XENO_POSIX_LIBS:=-Wl,@$(XENO_PATH)/lib/posix.wrappers -L$(XENO_PATH)/lib `/usr/xenomai/bin/xeno-config --native --ldflags`
+XENO_POSIX_LIBS:=`/usr/xenomai/bin/xeno-config --posix --ldflags --auto-init-solib`
 XENO_LIB_PATH ?= $(XENO_PATH)/lib/
 U = /Users/Giulio/arm/usr
 
 #LD_XENO_WRAP_FLAGS := -Wl$(shell for a in `grep -RhIo "\w*pthread_\w*" pure-data/src pure-data/extra libpd_wrapper | grep -v "_t" | grep -v pthread_join | sort -u`; do printf ",-wrap,$$a"; done) -lpthread_rt -L$(XENO_LIB_PATH)
-LDFLAGS = -shared -ldl -Wl,-Bsymbolic $(XENO_POSIX_LIBS)
+LDFLAGS = -lm -ldl -Wl,-Bsymbolic $(XENO_POSIX_LIBS) -no-pie -fno-pie -Wl,-soname,libpd.so -shared
 CPP_LDFLAGS = $(LDFLAGS)
 
 PDNATIVE_SOLIB_EXT ?= $(SOLIB_EXT)
@@ -129,12 +130,12 @@ CXXFLAGS = $(CFLAGS) $(CPP_FLAGS)
 libpd: $(LIBPD)
 
 $(LIBPD): ${PD_FILES:.c=.o} ${UTIL_FILES:.c=.o} ${EXTRA_FILES:.c=.o}
-	$(CC) -o $(LIBPD) $^ $(LDFLAGS) -lm -lpthread 
+	$(CC) -o $(LIBPD) $^ $(LDFLAGS)
 
 cpplib: $(PDCPP)
 
 $(PDCPP): ${PD_FILES:.c=.o} ${UTIL_FILES:.c=.o} ${EXTRA_FILES:.c=.o} ${CPP_FILES:.cpp=.o} 
-	g++ -o $(PDCPP) $^ $(CPP_LDFLAGS) -lm -lpthread
+	g++ -o $(PDCPP) $^ $(CPP_LDFLAGS)
 
 clean:
 	rm -f ${PD_FILES:.c=.o} ${PD_EXTRA_OBJS} ${CPP_FILES:.cpp=.o} ${JNI_FILE:.c=.o}
