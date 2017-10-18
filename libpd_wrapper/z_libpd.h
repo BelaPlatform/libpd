@@ -82,6 +82,9 @@ EXTERN int libpd_process_short(const int ticks,
 EXTERN int libpd_process_double(const int ticks,
     const double *inBuffer, double *outBuffer);
 
+/// process the sys arrays
+EXTERN int libpd_process_sys(void);
+
 /// process non-interleaved float samples from inBuffer -> libpd -> outBuffer
 /// copies buffer contents to/from libpd without striping
 /// buffer sizes are based on a single tick and # of channels where:
