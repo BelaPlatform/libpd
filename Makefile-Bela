@@ -1,0 +1,11 @@
+XENO_CONFIG:=/usr/xenomai/bin/xeno-config
+XENOMAI_CFLAGS:=$(shell $(XENO_CONFIG) --skin=posix --cflags)
+ADDITIONAL_CFLAGS:=-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=hard -O3 -g -ftree-vectorize -ffast-math $(XENOMAI_CFLAGS)
+ADDITIONAL_LDFLAGS:= $(shell $(XENO_CONFIG) --skin=posix --ldflags --no-auto-init)
+
+UTIL:=true
+EXTRA:=true
+DOUBLE:=false
+include Makefile
+install-full: install
+	install -m 644 pure-data/src/*.h $(includedir)/libpd
