@@ -166,6 +166,19 @@ int libpd_init_audio(int inChannels, int outChannels, int sampleRate) {
   return 0;
 }
 
+int libpd_process_sys(){
+  size_t n_in = STUFF->st_inchannels * DEFDACBLKSIZE;
+  size_t n_out = STUFF->st_outchannels * DEFDACBLKSIZE;
+  t_sample *p;
+  size_t i;
+  sys_lock();
+  sys_microsleep(0);
+  memset(STUFF->st_soundout, 0, n_out * sizeof(t_sample));
+  SCHED_TICK(pd_this->pd_systime + STUFF->st_time_per_dsp_tick);
+  sys_unlock();
+  return 0;
+}
+
 static const t_sample sample_to_short = SHRT_MAX,
                       short_to_sample = 1.0 / (t_sample) SHRT_MAX;
 
