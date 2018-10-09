@@ -21,7 +21,7 @@ extern "C"
 EXTERN int libpd_init(void);
 EXTERN void libpd_clear_search_path(void);
 EXTERN void libpd_add_to_search_path(const char *sym);
-
+    
 EXTERN void *libpd_openfile(const char *basename, const char *dirname);
 EXTERN void libpd_closefile(void *p);
 EXTERN int libpd_getdollarzero(void *p);
@@ -32,15 +32,15 @@ EXTERN int libpd_process_sys(void);
 EXTERN int libpd_process_raw(const float *inBuffer, float *outBuffer);
 EXTERN int libpd_process_short(const int ticks,
     const short *inBuffer, short *outBuffer);
-EXTERN int libpd_process_float(int ticks,
+EXTERN int libpd_process_float(const int ticks,
     const float *inBuffer, float *outBuffer);
-EXTERN int libpd_process_double(int ticks,
+EXTERN int libpd_process_double(const int ticks,
     const double *inBuffer, double *outBuffer);
 
 EXTERN int libpd_arraysize(const char *name);
 // The parameters of the next two functions are inspired by memcpy.
 EXTERN int libpd_read_array(float *dest, const char *src, int offset, int n);
-EXTERN int libpd_write_array(const char *dest, int offset, float *src, int n);
+EXTERN int libpd_write_array(const char *dest, int offset, const float *src, int n);
 
 EXTERN int libpd_bang(const char *recv);
 EXTERN int libpd_float(const char *recv, float x);
@@ -109,9 +109,53 @@ EXTERN void libpd_set_aftertouchhook(const t_libpd_aftertouchhook hook);
 EXTERN void libpd_set_polyaftertouchhook(const t_libpd_polyaftertouchhook hook);
 EXTERN void libpd_set_midibytehook(const t_libpd_midibytehook hook);
 
-EXTERN int libpd_startgui(char *path);
-EXTERN void libpd_stopgui( void);
-EXTERN void libpd_pollgui( void);
+/// \section GUI
+
+/// open the current patches within a Pd vanilla GUI
+/// requires the path to Pd's main folder that contains bin/, tcl/, etc
+/// returns 0 on success
+EXTERN int libpd_start_gui(char *path);
+
+/// stop the Pd vanilla GUI
+EXTERN void libpd_stop_gui(void);
+
+/// update and handle any GUI messages
+EXTERN void libpd_poll_gui(void);
+
+/// \section Multiple Instances
+
+/// create a new pd instance
+/// returns 0 when libpd is not compiled with PDINSTANCE
+EXTERN t_pdinstance *libpd_new_instance(void);
+
+/// set the current pd instance,
+/// subsequent libpd calls will affect this instance only
+/// does nothing when libpd is not compiled with PDINSTANCE
+EXTERN void libpd_set_instance(t_pdinstance *x);
+
+/// free a pd instance
+/// does nothing when libpd is not compiled with PDINSTANCE
+EXTERN void libpd_free_instance(t_pdinstance *x);
+
+/// get the current pd instance
+EXTERN t_pdinstance *libpd_this_instance(void);
+
+/// get a pd instance by index
+/// returns 0 if index is out of bounds
+/// returns "this" instance when libpd is not compiled with PDINSTANCE
+EXTERN t_pdinstance *libpd_get_instance(int index);
+
+/// get the number of pd instances
+/// returns 1 when libpd is not compiled with PDINSTANCE
+EXTERN int libpd_num_instances(void);
+
+/// \section Log Level
+
+/// set verbose print state: 0 or 1
+EXTERN void libpd_set_verbose(int verbose);
+
+/// get the verbose print state: 0 or 1
+EXTERN int libpd_get_verbose(void);
 
 #ifdef __cplusplus
 }

@@ -1,45 +1,51 @@
 UNAME = $(shell uname)
 SOLIB_PREFIX = lib
+LIBPD_IMPLIB =
+LIBPD_DEF =
 
 ifeq ($(UNAME), Darwin)  # Mac
   SOLIB_EXT = dylib
   PDNATIVE_SOLIB_EXT = jnilib
   PDNATIVE_PLATFORM = mac
   PDNATIVE_ARCH =
-  PLATFORM_CFLAGS = -DHAVE_LIBDL -arch x86_64 -arch i386 -g \
+  PLATFORM_CFLAGS = -DHAVE_LIBDL -arch x86_64 -arch i386 \
     -I/System/Library/Frameworks/JavaVM.framework/Headers
-  LDFLAGS = -arch x86_64 -arch i386 -dynamiclib -ldl
+  LDFLAGS = -arch x86_64 -arch i386 -dynamiclib -ldl -Wl,-no_compact_unwind
   CSHARP_LDFLAGS = $(LDFLAGS)
-  CPP_FLAGS = -stdlib=libc++
-  CPP_LDFLAGS = $(LDFLAGS) -stdlib=libc++
   JAVA_LDFLAGS = -framework JavaVM $(LDFLAGS)
 else
   ifeq ($(OS), Windows_NT)  # Windows, use Mingw
-    CC = gcc
+    CC ?= gcc
     SOLIB_EXT = dll
     SOLIB_PREFIX =
+    LIBPD_IMPLIB = libs/libpd.lib
+    LIBPD_DEF = libs/libpd.def
     PDNATIVE_PLATFORM = windows
     PDNATIVE_ARCH = $(shell $(CC) -dumpmachine | sed -e 's,-.*,,' -e 's,i[3456]86,x86,' -e 's,amd64,x86_64,')
     PLATFORM_CFLAGS = -DWINVER=0x502 -DWIN32 -D_WIN32 -DPD_INTERNAL \
       -I"$(JAVA_HOME)/include" -I"$(JAVA_HOME)/include/win32"
-    MINGW_LDFLAGS = -shared -Wl,--export-all-symbols -lws2_32 -lkernel32
-    LDFLAGS = $(MINGW_LDFLAGS) -Wl,--output-def=libs/libpd.def \
-      -Wl,--out-implib=libs/libpd.lib
+    MINGW_LDFLAGS = -shared -Wl,--export-all-symbols -lws2_32 -lkernel32 -static-libgcc
+    LDFLAGS = $(MINGW_LDFLAGS) -Wl,--output-def=$(LIBPD_DEF) \
+      -Wl,--out-implib=$(LIBPD_IMPLIB)
     CSHARP_LDFLAGS = $(MINGW_LDFLAGS) -Wl,--output-def=libs/libpdcsharp.def \
-      -static-libgcc -Wl,--out-implib=libs/libpdcsharp.lib
-    CPP_LDFLAGS = $(LDFLAGS)
+      -Wl,--out-implib=libs/libpdcsharp.lib
     JAVA_LDFLAGS = $(MINGW_LDFLAGS) -Wl,--kill-at
-  else  # Assume Linux
+  else  # Linux or *BSD
     SOLIB_EXT = so
-    PDNATIVE_PLATFORM = linux
     PDNATIVE_ARCH = $(shell $(CC) -dumpmachine | sed -e 's,-.*,,' -e 's,i[3456]86,x86,' -e 's,amd64,x86_64,')
-    JAVA_HOME ?= /usr/lib/jvm/default-java
-    PLATFORM_CFLAGS = -DHAVE_LIBDL -Wno-int-to-pointer-cast \
-      -Wno-pointer-to-int-cast -fPIC -I"$(JAVA_HOME)/include" \
-      -I"$(JAVA_HOME)/include/linux"
-    LDFLAGS = -shared -ldl -Wl,-Bsymbolic
+    PLATFORM_CFLAGS = -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -fPIC
+    LDFLAGS = -shared -Wl,-Bsymbolic
+    ifeq ($(UNAME), Linux)
+      PDNATIVE_PLATFORM = linux
+      JAVA_HOME ?= /usr/lib/jvm/default-java
+      PLATFORM_CFLAGS += -I"$(JAVA_HOME)/include/linux" -DHAVE_LIBDL
+      LDFLAGS += -ldl
+    else ifeq ($(UNAME), FreeBSD)
+      PDNATIVE_PLATFORM = FreeBSD
+      JAVA_HOME ?= /usr/local/openjdk8
+      PLATFORM_CFLAGS += -I"$(JAVA_HOME)/include/"
+    endif
     CSHARP_LDFLAGS = $(LDFLAGS)
-    CPP_LDFLAGS = $(LDFLAGS)
     JAVA_LDFLAGS = $(LDFLAGS)
   endif
 endif
@@ -87,12 +93,9 @@ LIBPD_UTILS = \
     libpd_wrapper/util/z_queued.c \
     libpd_wrapper/util/ringbuffer.c
 
-CPP_FILES = \
-    cpp/PdBase.cpp \
-    cpp/PdTypes.cpp
-
 PDJAVA_JAR_CLASSES = \
     java/org/puredata/core/PdBase.java \
+    java/org/puredata/core/PdBaseloader.java \
     java/org/puredata/core/NativeLoader.java \
     java/org/puredata/core/PdListener.java \
     java/org/puredata/core/PdMidiListener.java \
@@ -101,23 +104,37 @@ PDJAVA_JAR_CLASSES = \
     java/org/puredata/core/utils/IoUtils.java \
     java/org/puredata/core/utils/PdDispatcher.java
 
+# additional Java source jar files
+PDJAVA_SRC_FILES = \
+	.classpath \
+	.project
+
 JNI_SOUND = jni/z_jni_plain.c
 
 # conditional libpd_wrapper/util compilation
-ifeq ($(UTIL), true)
-    UTIL_FILES = $(LIBPD_UTILS)
+UTIL_FILES = $(LIBPD_UTILS)
+ifeq ($(UTIL), false)
+    UTIL_FILES =
 endif
 
 # conditional pure-data/extra externals compilation
-ifeq ($(EXTRA), true)
-    EXTRA_FILES = $(PD_EXTRA_FILES)
-    EXTRA_CFLAGS = -DLIBPD_EXTRA
+EXTRA_FILES = $(PD_EXTRA_FILES)
+EXTRA_CFLAGS = -DLIBPD_EXTRA
+ifeq ($(EXTRA), false)
+    EXTRA_FILES =
+    EXTRA_CFLAGS =
+endif
+
+# conditional multi-instance support
+MULTI_CFLAGS =
+ifeq ($(MULTI), true)
+    MULTI_CFLAGS = -DPDINSTANCE -DPDTHREADS
 endif
 
 # conditional optimizations or debug settings
-OPT_CFLAGS = -O3
+OPT_CFLAGS = -ffast-math -funroll-loops -fomit-frame-pointer -O3
 ifeq ($(DEBUG), true)
-    OPT_CFLAGS = -Wall
+    OPT_CFLAGS = -g -O0
 endif
 
 # conditional to set numeric locale to default "C"
@@ -151,22 +168,29 @@ libdir ?= $(prefix)/lib
 JNI_FILE = libpd_wrapper/util/ringbuffer.c libpd_wrapper/util/z_queued.c $(JNI_SOUND)
 JNIH_FILE = jni/z_jni.h
 JAVA_BASE = java/org/puredata/core/PdBase.java
-LIBPD = libs/libpd.$(SOLIB_EXT)
+ifeq ($(OS), Windows_NT)
+	LIBPD = libs/pd.$(SOLIB_EXT)
+else
+	LIBPD = libs/libpd.$(SOLIB_EXT)
+endif
 PDCSHARP = libs/libpdcsharp.$(SOLIB_EXT)
-PDCPP = libs/libpdcpp.$(SOLIB_EXT)
 
 PDJAVA_BUILD = java-build
-PDJAVA_DIR = $(PDJAVA_BUILD)/org/puredata/core/natives/$(PDNATIVE_PLATFORM)/$(PDNATIVE_ARCH)/
+PDJAVA_DIR = $(PDJAVA_BUILD)/org/puredata/core/natives/$(PDNATIVE_PLATFORM)/$(PDNATIVE_ARCH)
 PDJAVA_NATIVE = $(PDJAVA_DIR)/$(SOLIB_PREFIX)pdnative.$(PDNATIVE_SOLIB_EXT)
 PDJAVA_JAR = libs/libpd.jar
+PDJAVA_SRC = libs/libpd-sources.jar
+PDJAVA_DOC = javadoc
 
 CFLAGS = -DPD -DHAVE_UNISTD_H -DUSEAPI_DUMMY -I./pure-data/src \
          -I./libpd_wrapper -I./libpd_wrapper/util $(PLATFORM_CFLAGS) \
-         $(OPT_CFLAGS) $(EXTRA_CFLAGS) $(LOCALE_CFLAGS) $(ADDITIONAL_CFLAGS)
+         $(OPT_CFLAGS) $(EXTRA_CFLAGS) $(MULTI_CFLAGS) $(LOCALE_CFLAGS) \
+         $(ADDITIONAL_CFLAGS)
+LDFLAGS += $(ADDITIONAL_LDFLAGS)
+CSHARP_LDFLAGS += $(ADDITIONAL_LDFLAGS)
+JAVA_LDFLAGS += $(ADDITIONAL_LDFLAGS)
 
-CXXFLAGS = $(CFLAGS) $(CPP_FLAGS)
-
-.PHONY: libpd csharplib cpplib javalib install uninstall clean clobber
+.PHONY: libpd csharplib cpplib javalib javadoc javasrc install uninstall clean clobber
 
 libpd: $(LIBPD)
 
@@ -185,30 +209,33 @@ $(PDJAVA_NATIVE): ${PD_FILES:.c=.o} ${LIBPD_UTILS:.c=.o} ${EXTRA_FILES:.c=.o} ${
 	cp $(PDJAVA_NATIVE) libs/
 
 $(PDJAVA_JAR): $(PDJAVA_NATIVE) $(PDJAVA_JAR_CLASSES)
-	javac -d $(PDJAVA_BUILD) $(PDJAVA_JAR_CLASSES)
+	javac -classpath java -d $(PDJAVA_BUILD) $(PDJAVA_JAR_CLASSES)
 	jar -cvf $(PDJAVA_JAR) -C $(PDJAVA_BUILD) org/puredata/
+
+javadoc: $(PDJAVA_JAR_CLASSES)
+	javadoc -d $(PDJAVA_DOC) -sourcepath java org.puredata.core
+
+javasrc: $(PDJAVA_SRC)
+
+$(PDJAVA_SRC): $(PDJAVA_JAR_FILES)
+	jar -cvf $(PDJAVA_SRC) $(PDJAVA_SRC_FILES) -C java org
 
 csharplib: $(PDCSHARP)
 
 $(PDCSHARP): ${PD_FILES:.c=.o} ${EXTRA_FILES:.c=.o}
 	$(CC) -o $(PDCSHARP) $^ $(CSHARP_LDFLAGS) -lm -lpthread
 
-cpplib: $(PDCPP)
-
-# build with LIBPD_UTILS since cpp wrapper uses the ringbuffer
-$(PDCPP): ${PD_FILES:.c=.o} ${LIBPD_UTILS:.c=.o} ${EXTRA_FILES:.c=.o} ${CPP_FILES:.cpp=.o}
-	g++ -o $(PDCPP) $^ $(CPP_LDFLAGS) -lm -lpthread
-
 clean:
-	rm -f ${PD_FILES:.c=.o} ${PD_EXTRA_OBJS} ${CPP_FILES:.cpp=.o} ${JNI_FILE:.c=.o}
-	rm -f ${PD_UTIL_FILES:.c=.o} ${PD_EXTRA_FILES:.c=.o}
+	rm -f ${PD_FILES:.c=.o} ${PD_EXTRA_OBJS} ${JNI_FILE:.c=.o}
+	rm -f ${UTIL_FILES:.c=.o} ${PD_EXTRA_FILES:.c=.o}
 
 clobber: clean
-	rm -f $(LIBPD) $(PDCSHARP) $(PDCPP) $(PDJAVA_NATIVE) $(PDJAVA_JAR)
-	rm -f libs/`basename $(PDJAVA_NATIVE)`
-	rm -rf $(PDJAVA_BUILD)
+	rm -f $(LIBPD) $(LIBPD_IMPLIB) $(LIBPD_DEF)
+	rm -f $(PDCSHARP) ${PDCSHARP:.$(SOLIB_EXT)=.lib} ${PDCSHARP:.$(SOLIB_EXT)=.def}
+	rm -f $(PDJAVA_JAR) $(PDJAVA_NATIVE) libs/`basename $(PDJAVA_NATIVE)`
+	rm -rf $(PDJAVA_BUILD) $(PDJAVA_SRC) $(PDJAVA_DOC)
 
-# optional install headers & libs based on build type: cpplib and/or UTIL=true 
+# optional install headers & libs based on build type: UTIL=true and/or windows
 install:
 	install -d $(includedir)/libpd
 	install -m 644 libpd_wrapper/z_libpd.h $(includedir)/libpd
@@ -217,17 +244,13 @@ install:
 	    install -d $(includedir)/libpd/util; \
 	    install -m 644 libpd_wrapper/util/z_print_util.h $(includedir)/libpd/util; \
 	    install -m 644 libpd_wrapper/util/z_queued.h $(includedir)/libpd/util; \
+		install -m 644 cpp/*hpp $(includedir)/libpd; \
 	fi
 	install -d $(libdir)
-	if [ -e $(LIBPD) ]; then \
-	    install -m 755 $(LIBPD) $(libdir); \
-	fi
-	if [ -e $(PDCPP) ]; then \
-	    install -m 644 cpp/*.hpp $(includedir)/libpd; \
-	    install -m 755 $(PDCPP) $(libdir); \
-	fi
+	install -m 755 $(LIBPD) $(libdir)
+	if [ -e $(LIBPD_IMPLIB) ]; then install -m 755 $(LIBPD_IMPLIB) $(libdir); fi
+	if [ -e $(LIBPD_DEF) ]; then install -m 755 $(LIBPD_DEF) $(libdir); fi
 
 uninstall:
 	rm -rf $(includedir)/libpd
-	rm -f $(libdir)/`basename $(LIBPD)`
-	rm -f $(libdir)/`basename $(PDCPP)`
+	rm -f $(libdir)/`basename $(LIBPD)` $(libdir)/`basename $(LIBPD_IMPLIB)` $(libdir)/`basename $(LIBPD_DEF)`
