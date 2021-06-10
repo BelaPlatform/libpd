@@ -24,7 +24,7 @@ XENO_PATH?=/usr/local/linaro/arm-linux-gnueabihf/xenomai/
 XENO_POSIX_CFLAGS:=`/usr/xenomai/bin/xeno-config --skin=posix --cflags`
 #XENO_POSIX_LIBS:=$(shell DESTDIR=$(XENO_DESTDIR) $(XENO_CONFIG) --skin=posix --ldflags)
 #XENO_POSIX_LIBS:=-Wl,@$(XENO_PATH)/lib/posix.wrappers -L$(XENO_PATH)/lib `/usr/xenomai/bin/xeno-config --native --ldflags`
-XENO_POSIX_LIBS:=$(shell  /usr/xenomai/bin/xeno-config --skin=posix --ldflags --no-auto-init | sed s:-Wl,@/usr/xenomai/lib/modechk.wrappers:: | sed s:-lmodechk:: )
+XENO_POSIX_LIBS:=$(shell  /usr/xenomai/bin/xeno-config --skin=posix --ldflags --no-auto-init --no-mode-check | sed s:-lmodechk:: )
 XENO_LIB_PATH ?= $(XENO_PATH)/lib/
 
 #LD_XENO_WRAP_FLAGS := -Wl$(shell for a in `grep -RhIo "\w*pthread_\w*" pure-data/src pure-data/extra libpd_wrapper | grep -v "_t" | grep -v pthread_join | sort -u`; do printf ",-wrap,$$a"; done) -lpthread_rt -L$(XENO_LIB_PATH)
