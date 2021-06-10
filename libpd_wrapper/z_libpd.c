@@ -172,7 +172,7 @@ int libpd_process_sys(){
   t_sample *p;
   size_t i;
   sys_lock();
-  sys_microsleep(0);
+  sys_pollgui();
   memset(STUFF->st_soundout, 0, n_out * sizeof(t_sample));
   SCHED_TICK(pd_this->pd_systime + STUFF->st_time_per_dsp_tick);
   sys_unlock();
