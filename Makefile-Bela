@@ -75,7 +75,7 @@ PD_EXTRA_FILES = \
 LIBPD_UTILS = \
     libpd_wrapper/util/z_print_util.c \
     libpd_wrapper/util/z_queued.c \
-    libpd_wrapper/util/ringbuffer.c
+    pure-data/src/ringbuffer.c
 
 CPP_FILES = \
 	cpp/PdBase.cpp \
