@@ -39,7 +39,9 @@ PD_FILES = \
     pure-data/src/d_fft_fftsg.c \
     pure-data/src/d_filter.c pure-data/src/d_global.c pure-data/src/d_math.c \
     pure-data/src/d_misc.c pure-data/src/d_osc.c pure-data/src/d_resample.c \
-    pure-data/src/d_soundfile.c pure-data/src/d_ugen.c \
+    pure-data/src/d_soundfile.c pure-data/src/d_soundfile_aiff.c \
+    pure-data/src/d_soundfile_caf.c pure-data/src/d_soundfile_next.c \
+    pure-data/src/d_soundfile_wave.c pure-data/src/d_ugen.c \
     pure-data/src/g_all_guis.c pure-data/src/g_array.c pure-data/src/g_bang.c \
     pure-data/src/g_canvas.c pure-data/src/g_clone.c pure-data/src/g_editor.c \
     pure-data/src/g_editor_extras.c \
@@ -54,14 +56,17 @@ PD_FILES = \
     pure-data/src/m_conf.c pure-data/src/m_glob.c pure-data/src/m_memory.c \
     pure-data/src/m_obj.c pure-data/src/m_pd.c pure-data/src/m_sched.c \
     pure-data/src/s_audio.c pure-data/src/s_audio_dummy.c pure-data/src/s_inter.c \
-    pure-data/src/s_loader.c pure-data/src/s_main.c pure-data/src/s_path.c \
+    pure-data/src/s_loader.c pure-data/src/s_main.c \
+    pure-data/src/s_net.c pure-data/src/s_path.c \
     pure-data/src/s_print.c pure-data/src/s_utf8.c pure-data/src/x_acoustics.c \
     pure-data/src/x_arithmetic.c pure-data/src/x_array.c pure-data/src/x_connective.c \
+    pure-data/src/x_file.c \
     pure-data/src/x_gui.c pure-data/src/x_interface.c pure-data/src/x_list.c \
     pure-data/src/x_midi.c pure-data/src/x_misc.c pure-data/src/x_net.c \
     pure-data/src/x_scalar.c pure-data/src/x_text.c pure-data/src/x_time.c \
     pure-data/src/x_vexp.c pure-data/src/x_vexp_if.c pure-data/src/x_vexp_fun.c \
     pure-data/src/s_net.c \
+    pure-data/src/ringbuffer.c \
     libpd_wrapper/s_libpdmidi.c libpd_wrapper/x_libpdreceive.c \
     libpd_wrapper/z_hooks.c libpd_wrapper/z_libpd.c
 
@@ -70,12 +75,12 @@ PD_EXTRA_FILES = \
     pure-data/extra/choice/choice.c \
     pure-data/extra/fiddle~/fiddle~.c pure-data/extra/loop~/loop~.c \
     pure-data/extra/lrshift~/lrshift~.c pure-data/extra/pique/pique.c \
+    pure-data/extra/pd~/pdsched.c pure-data/extra/pd~/pd~.c \
     pure-data/extra/sigmund~/sigmund~.c pure-data/extra/stdout/stdout.c
 
 LIBPD_UTILS = \
     libpd_wrapper/util/z_print_util.c \
-    libpd_wrapper/util/z_queued.c \
-    libpd_wrapper/util/ringbuffer.c
+    libpd_wrapper/util/z_queued.c
 
 CPP_FILES = \
 	cpp/PdBase.cpp \
@@ -143,7 +148,7 @@ install:
 	mkdir -p $(prefix)/include/libpd/util
 	install libpd_wrapper/util/z_print_util.h $(prefix)/include/libpd/util
 	install libpd_wrapper/util/z_queued.h $(prefix)/include/libpd/util
-	install libpd_wrapper/util/ringbuffer.h $(prefix)/include/libpd/
+	install pure-data/src/ringbuffer.h $(prefix)/include/libpd/util
 	install $(LIBPD) $(prefix)/lib/ && cd $(prefix)/lib && rm -rf libpd.so && ln -s `basename $(LIBPD)` libpd.so
 	ldconfig || true
 	if [ -e $(PDCPP) ]; then \

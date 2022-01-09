@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
 
   // now run pd for ten seconds (logical time)
   int i;
-  for (i = 0; i < 10 * srate / 64; i++) {
+  for (i = 0; i < 100 * srate / 16; i++) {
     // fill inbuf here
     libpd_process_float(1, inbuf, outbuf);
     // use outbuf here
