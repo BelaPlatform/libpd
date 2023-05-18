@@ -27,5 +27,5 @@ BRANCH=`git rev-parse --abbrev-ref HEAD`
 REMOTE=`git config --get remote.$BRANCH.url`
 
 echo "libpd for arm and xenomai-$XENOMAI_VERSION. Has Pd 0.48" > description-pak
-checkinstall --deldoc=yes --backup=no --pkgname="$PKGNAME" --pkgsource="$REMOTE $COMMIT $DIRTY_HASH" --provides="$PROVIDES" --conflicts="$CONFLICTS" --maintainer="`git config --get user.name` \<`git config --get user.email`\>" --pkgversion="$VERSION" -y make -f Makefile-Bela install
+checkinstall --type=debian --deldoc=yes --backup=no --pkgname="$PKGNAME" --pkgsource="$REMOTE $COMMIT $DIRTY_HASH" --provides="$PROVIDES" --conflicts="$CONFLICTS" --maintainer="`git config --get user.name` \<`git config --get user.email`\>" --pkgversion="$VERSION" -y make -f Makefile-Bela install
 rm -rf description-pak
