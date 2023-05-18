@@ -288,8 +288,12 @@ install:
 	install -d $(libdir)
 	if [ -e '$(LIBPD)' ]; then install -m 755 $(LIBPD) $(libdir); fi
 	if [ -e '$(LIBPD_STATIC)' ]; then install -m 755 $(LIBPD_STATIC) $(libdir); fi
+ifneq (,$(strip $(LIBPD_IMPLIB)))
 	if [ -e '$(LIBPD_IMPLIB)' ]; then install -m 755 $(LIBPD_IMPLIB) $(libdir); fi
+endif
+ifneq (,$(strip $(LIBPD_DEF)))
 	if [ -e '$(LIBPD_DEF)' ]; then install -m 755 $(LIBPD_DEF) $(libdir); fi
+endif
 
 uninstall:
 	rm -rf $(includedir)/libpd
