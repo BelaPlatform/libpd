@@ -57,5 +57,10 @@ int rb_read_from_buffer(ring_buffer *buffer, char *dest, int len);
 /// clears the contents of the ring buffer
 /// this is safe to call from any thread
 void rb_clear_buffer(ring_buffer *buffer);
+/// resize the internal buffer and copy up to newsize-1 of the existing data to
+/// the new buffer
+/// note: call this while reads and writes are not taking place
+/// returns 0 on success
+int rb_resize(ring_buffer* rb, int newsize);
 
 #endif
