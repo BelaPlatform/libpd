@@ -9,7 +9,7 @@ case $XENOMAI_VERSION in
 	;;
 esac
 
-[ -z "$PKGNAME" ] && PKGNAME="libpd-xenomai-$XENOMAI_VERSION-dev"
+[ -z "$PKGNAME" ] && PKGNAME="libpd-bela-dev"
 PROVIDES="libpd-dev"
 CONFLICTS=
 
