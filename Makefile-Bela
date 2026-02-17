@@ -12,3 +12,4 @@ ADDITIONAL_LDFLAGS=-Wl,@/root/wrappers/evl.wrappers -lwrappers -L/root/wrappers 
 include Makefile
 install-full: install
 	install -m 644 pure-data/src/*.h $(includedir)/libpd
+	install -m 755 /root/wrappers/libwrappers.so /usr/local/lib
