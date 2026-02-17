@@ -7,6 +7,8 @@ UTIL:=true
 EXTRA:=true
 DOUBLE:=false
 CC=distcc-clang
+ADDITIONAL_CFLAGS=-fno-pie -fPIC -mtune=cortex-a53 -g -DTHREADED_IO
+ADDITIONAL_LDFLAGS=-Wl,@/root/wrappers/evl.wrappers -lwrappers -L/root/wrappers -z defs
 include Makefile
 install-full: install
 	install -m 644 pure-data/src/*.h $(includedir)/libpd
