@@ -23,7 +23,7 @@ then
 fi
 VERSION=""
 #ensure VERSION starts with a number, or checkinstall will complain
-PD_VERSION="$(cd pure-data && git describe --tags HEAD)"
+PD_VERSION="$(cd pure-data && git describe --tags --all  HEAD | sed "s:.*/::")"
 VERSION="`git describe --tags | sed \"s/^[^0-9]*//\"`$DIRTY_HASH-Pd-$PD_VERSION"
 COMMIT=`git rev-parse HEAD`
 BRANCH=`git rev-parse --abbrev-ref HEAD`
@@ -32,7 +32,7 @@ REMOTE=$(git config --get remote.$BRANCH.url || true)
 echo "libpd for arm and xenomai-$XENOMAI_VERSION. Has Pd $PD_VERSION" > description-pak
 
 mkdir -p /usr/local/include/libpd
-checkinstall --type=debian --deldoc=yes --backup=no --pkgname="$PKGNAME" --pkgsource="$REMOTE $COMMIT $DIRTY_HASH" --provides="$PROVIDES" --conflicts="$CONFLICTS" --maintainer="`git config --get user.name` \<`git config --get user.email`\>" --pkgversion="$VERSION" -y make -f Makefile-Bela install-full
+checkinstall --type=debian --deldoc=yes --nodoc --backup=no --pkgname="$PKGNAME" --pkgsource="$REMOTE $COMMIT $DIRTY_HASH" --provides="$PROVIDES" --conflicts="$CONFLICTS" --maintainer="`git config --get user.name` \<`git config --get user.email`\>" --pkgversion="$VERSION" --install=no -y make -f Makefile-Bela install-full
 rm -rf description-pak
 
 # rebuild package to add postinst and remove stale files
