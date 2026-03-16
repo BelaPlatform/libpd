@@ -29,6 +29,8 @@ COMMIT=`git rev-parse HEAD`
 BRANCH=`git rev-parse --abbrev-ref HEAD`
 REMOTE=$(git config --get remote.$BRANCH.url || true)
 
+make -f Makefile-Bela
+
 echo "libpd for arm and xenomai-$XENOMAI_VERSION. Has Pd $PD_VERSION" > description-pak
 
 mkdir -p /usr/local/include/libpd
